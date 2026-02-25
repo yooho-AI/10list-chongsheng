@@ -167,7 +167,6 @@ function InfoCard() {
 // ============================================================
 // 社死值计量器 — >=80 时脉冲预警
 // ============================================================
-
 function SocialDeathMeter() {
   const socialDeath = useGameStore((s) => s.socialDeath)
   const isWarning = socialDeath >= 80
@@ -199,7 +198,6 @@ function SocialDeathMeter() {
 // ============================================================
 // 哭声分贝计量器
 // ============================================================
-
 function CryDecibelMeter() {
   const cryDecibel = useGameStore((s) => s.cryDecibel)
 
@@ -230,15 +228,14 @@ function CryDecibelMeter() {
 // ============================================================
 // 角色选择列表
 // ============================================================
-
 function CharacterList() {
   const currentCharacter = useGameStore((s) => s.currentCharacter)
-  const currentRound = useGameStore((s) => s.currentRound)
+  const currentChapter = useGameStore((s) => s.currentChapter)
   const characters = useGameStore((s) => s.characters)
   const characterStats = useGameStore((s) => s.characterStats)
   const selectCharacter = useGameStore((s) => s.selectCharacter)
 
-  const available = getAvailableCharacters(currentRound, characters)
+  const available = getAvailableCharacters(currentChapter, characters)
 
   return (
     <div className="cs-card" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
@@ -277,7 +274,6 @@ function CharacterList() {
 // ============================================================
 // 左侧面板主组件
 // ============================================================
-
 export default function LeftPanel() {
   return (
     <div
