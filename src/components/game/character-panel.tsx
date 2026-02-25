@@ -63,7 +63,6 @@ function SceneSelector() {
 // ============================================================
 // 角色立绘卡片 — 3:4
 // ============================================================
-
 function PortraitCard() {
   const currentCharacter = useGameStore((s) => s.currentCharacter)
   const characters = useGameStore((s) => s.characters)
@@ -86,7 +85,6 @@ function PortraitCard() {
 // ============================================================
 // 数值条
 // ============================================================
-
 function StatBar({ label, value, color, icon }: { label: string; value: number; color: string; icon: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
