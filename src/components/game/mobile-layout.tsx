@@ -9,7 +9,7 @@ import { useState, useRef, useEffect, type FormEvent } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   useGameStore, SCENES, ITEMS, STORY_INFO, ENDINGS,
-  MAX_ROUNDS, getAvailableCharacters, getStatLevel,
+  MAX_ROUNDS, getAvailableCharacters,
 } from '@/lib/store'
 import { parseStoryParagraph } from '@/lib/parser'
 import { useBgm } from '@/lib/bgm'

@@ -10,11 +10,10 @@ import { immer } from 'zustand/middleware/immer'
 import { streamChat, chat } from './stream'
 import {
   type Character, type CharacterStats, type Message,
-  SCENES, ITEMS, PERIODS, CHAPTERS, FORCED_EVENTS,
+  SCENES, ITEMS,
   MAX_ACTION_POINTS, MAX_ROUNDS,
-  STORY_INFO, ENDINGS,
   buildCharacters, buildInitialStats, getStatLevel,
-  getAvailableCharacters, getCurrentChapter, getRoundEvents,
+  getCurrentChapter, getRoundEvents,
 } from './data'
 import {
   trackGameStart, trackGameContinue, trackPlayerCreate,
