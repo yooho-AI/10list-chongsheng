@@ -111,7 +111,6 @@ function StatBar({ label, value, color, icon }: { label: string; value: number; 
 // ============================================================
 // 角色信息 + 按 category 分组渲染数值条
 // ============================================================
-
 const categories = ['relation', 'status', 'skill'] as const
 const categoryLabels: Record<string, string> = { relation: '关系', status: '状态', skill: '技能' }
 
