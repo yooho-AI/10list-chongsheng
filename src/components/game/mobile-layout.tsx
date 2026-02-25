@@ -465,6 +465,7 @@ function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
           <div className="mobile-menu-title" style={{ color: TEXT_PRIMARY }}>游戏菜单</div>
           <button className="mobile-menu-btn" style={{ color: TEXT_PRIMARY }} onClick={() => { saveGame(); onClose() }}>💾 保存游戏</button>
           <button className="mobile-menu-btn" style={{ color: TEXT_PRIMARY }} onClick={() => resetGame()}>🏠 返回标题</button>
+          <button className="mobile-menu-btn" style={{ color: TEXT_PRIMARY }} onClick={() => window.open('https://yooho.ai/', '_blank')}>🌐 返回主页</button>
           <button className="mobile-menu-btn" style={{ color: TEXT_PRIMARY }} onClick={onClose}>▶️ 继续游戏</button>
         </motion.div>
       </>)}
