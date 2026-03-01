@@ -50,3 +50,11 @@ export function trackCryChoice(decibel: number) {
 export function trackSocialDeath(value: number) {
   trackEvent('cs_social_death', { value })
 }
+
+export function trackTimeAdvance(round: number, period: string) {
+  trackEvent('cs_time_advance', { round, period })
+}
+
+export function trackSceneUnlock(scene: string) {
+  trackEvent('cs_scene_unlock', { scene })
+}

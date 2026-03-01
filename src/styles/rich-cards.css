@@ -1,0 +1,585 @@
+/**
+ * [INPUT]: 依赖 globals.css CSS 变量
+ * [OUTPUT]: 富UI组件全部样式——场景卡/回合变更卡/NPC气泡/DashboardDrawer/RecordSheet/角色档案/SVG关系图/Toast/选项面板/欢迎信/背包/TabBar/Header/输入区
+ * [POS]: styles 的富消息专用样式，承载所有新增视觉组件
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+
+/* ── 0. App Shell — 壳 + Header + TabBar ─────────── */
+
+.cs-shell {
+  display: flex; flex-direction: column; height: 100dvh;
+  background: var(--bg-secondary); font-family: var(--font);
+  overflow: hidden; position: relative;
+}
+
+@media (min-width: 431px) {
+  .cs-shell {
+    max-width: 430px; margin: 0 auto;
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    border-radius: 16px; box-shadow: 0 0 40px rgba(0,0,0,0.08);
+  }
+}
+
+.cs-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px; background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border); z-index: 10; flex-shrink: 0;
+}
+.cs-header-info {
+  display: flex; align-items: center; gap: 8px;
+}
+.cs-header-btn {
+  background: none; border: none; padding: 6px; cursor: pointer;
+  color: var(--text-secondary); border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s;
+}
+.cs-header-btn:active { background: var(--bg-active); }
+
+.cs-header-pill {
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;
+  background: rgba(255,107,157,0.08);
+}
+
+.cs-tab-content {
+  flex: 1; overflow: hidden; position: relative; z-index: 1;
+}
+
+.cs-tab-bar {
+  display: flex; align-items: center; justify-content: space-around;
+  padding: 6px 8px; padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
+  background: rgba(255,255,255,0.95); backdrop-filter: blur(10px);
+  border-top: 1px solid var(--border); flex-shrink: 0; z-index: 10;
+}
+.cs-tab-item {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 1px; padding: 4px 12px; background: none; border: none;
+  cursor: pointer; color: var(--text-muted); transition: color 0.15s;
+  border-radius: 8px;
+}
+.cs-tab-item:active { background: var(--bg-active); }
+.cs-tab-active { color: var(--primary); }
+
+/* ── 1. Scene Transition Card — 场景转场卡 ──────── */
+
+.cs-scene-card {
+  position: relative; width: 100%; height: 200px;
+  border-radius: 16px; overflow: hidden; margin-bottom: 8px;
+}
+.cs-scene-card img {
+  width: 100%; height: 100%; object-fit: cover;
+  animation: csKenBurns 8s ease-in-out infinite alternate;
+}
+.cs-scene-card-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(transparent 35%, rgba(0,0,0,0.45));
+  display: flex; flex-direction: column; justify-content: flex-end;
+  padding: 16px; color: white;
+}
+.cs-scene-card-name {
+  font-size: 18px; font-weight: 700; letter-spacing: 1px;
+  text-shadow: 0 1px 6px rgba(0,0,0,0.5);
+}
+.cs-scene-card-atmo { font-size: 12px; opacity: 0.8; margin-top: 3px; }
+.cs-scene-card-badge {
+  position: absolute; top: 12px; right: 12px;
+  background: #ff6b9d; color: white;
+  font-size: 10px; font-weight: 600; padding: 3px 10px;
+  border-radius: 10px; letter-spacing: 1px;
+  box-shadow: 0 2px 8px rgba(255,107,157,0.4);
+}
+@keyframes csKenBurns {
+  0%   { transform: scale(1); }
+  100% { transform: scale(1.15); }
+}
+
+/* ── 2. Round Change Card — 回合变更卡 ─────────── */
+
+.cs-round-card {
+  align-self: center; width: fit-content; max-width: 85%;
+  margin-bottom: 8px; text-align: center; position: relative;
+  background: linear-gradient(135deg, #FFFFFF, #FFF8FA);
+  border: 1px solid rgba(255,107,157,0.12);
+  border-radius: 0 0 16px 16px; padding: 24px 32px 20px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+  animation: csRoundSlide 0.5s ease-out;
+}
+.cs-round-card::before {
+  content: ''; position: absolute; top: -6px; left: 0; right: 0; height: 6px;
+  background: repeating-linear-gradient(90deg,
+    transparent 0px, transparent 8px,
+    rgba(255,107,157,0.1) 8px, rgba(255,107,157,0.1) 10px,
+    transparent 10px, transparent 18px);
+}
+.cs-round-number {
+  font-size: 28px; font-weight: 800; color: var(--primary);
+  letter-spacing: 3px; text-shadow: 0 0 16px rgba(255,107,157,0.2);
+}
+.cs-round-period { font-size: 14px; color: var(--primary); margin-top: 4px; font-weight: 500; letter-spacing: 1px; }
+.cs-round-chapter { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+@keyframes csRoundSlide {
+  0%   { opacity: 0; transform: translateY(-20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* ── 3. NPC Avatar Bubble — NPC 头像气泡行 ──────── */
+
+.cs-npc-row {
+  display: flex; align-items: flex-end; gap: 8px;
+  margin-bottom: 8px; max-width: 90%; align-self: flex-start;
+}
+.cs-npc-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  object-fit: cover; object-position: center top;
+  border: 2px solid; flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(255,107,157,0.15);
+}
+.cs-npc-bubble {
+  padding: 12px 16px;
+  background: #FFFFFF;
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 4px 18px 18px 18px;
+  font-size: 14px; line-height: 1.7;
+  color: var(--text-primary); min-width: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.cs-npc-bubble .dialogue-line { margin-bottom: 4px; }
+.cs-npc-bubble .action { color: var(--text-muted); font-style: italic; margin-bottom: 4px; }
+.cs-npc-bubble .narration { margin-bottom: 4px; }
+.cs-npc-bubble .stat-changes {
+  margin-top: 8px; padding-top: 8px;
+  border-top: 1px solid rgba(255,107,157,0.1);
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
+.cs-npc-bubble .stat-change { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 8px; background: rgba(255,107,157,0.06); }
+.cs-npc-bubble .stat-up { color: #34d399; }
+.cs-npc-bubble .stat-down { color: #f87171; }
+
+/* ── Player Bubble ─────────────────────────────── */
+
+.cs-bubble-player {
+  align-self: flex-end; max-width: 80%;
+  padding: 10px 16px; margin-bottom: 8px;
+  background: linear-gradient(135deg, #ff6b9d 0%, #e91e8c 100%);
+  color: white; border-radius: 18px 18px 4px 18px;
+  font-size: 14px; line-height: 1.6;
+  box-shadow: 0 2px 8px rgba(255,107,157,0.25);
+}
+
+/* ── System Bubble ─────────────────────────────── */
+
+.cs-bubble-system {
+  align-self: center; text-align: center;
+  padding: 6px 14px; margin-bottom: 8px;
+  font-size: 12px; color: var(--text-muted);
+}
+
+/* ── Typing Indicator ──────────────────────────── */
+
+.cs-typing {
+  display: flex; align-items: center; gap: 6px;
+  padding: 12px 16px;
+}
+.cs-typing-dot {
+  width: 6px; height: 6px; background: var(--primary);
+  border-radius: 50%; animation: cs-bounce 1.4s infinite ease-in-out both;
+}
+.cs-typing-dot:nth-child(1) { animation-delay: -0.32s; }
+.cs-typing-dot:nth-child(2) { animation-delay: -0.16s; }
+.cs-typing-dot:nth-child(3) { animation-delay: 0s; }
+
+@keyframes csPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* ── 4. Collapsible Choices — 可折叠选项面板 ───── */
+
+.cs-choices-bar {
+  display: flex; align-items: center; gap: 8px;
+  width: 100%; padding: 10px 16px; margin: 0;
+  background: rgba(255,255,255,0.9); border: none;
+  border-top: 1px solid var(--border);
+  font-size: 13px; color: var(--text-secondary);
+  cursor: pointer; transition: background 0.15s;
+}
+.cs-choices-bar:active { background: var(--bg-active); }
+.cs-choices-count {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 18px; height: 18px; padding: 0 5px;
+  background: var(--primary); color: white;
+  border-radius: 9px; font-size: 10px; font-weight: 600;
+  margin-left: auto;
+}
+
+.cs-choices-panel {
+  background: rgba(255,255,255,0.95); border-top: 1px solid var(--border);
+}
+.cs-choices-panel-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px; cursor: pointer;
+}
+.cs-choices-panel-title {
+  font-size: 12px; font-weight: 600; color: var(--text-secondary);
+}
+.cs-choices-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  padding: 0 12px 12px;
+}
+.cs-choices-card {
+  display: flex; align-items: center; gap: 6px;
+  padding: 10px 12px; background: rgba(255,240,243,0.6);
+  border: 1px solid rgba(255,107,157,0.1);
+  border-radius: 12px; color: var(--text-primary);
+  font-size: 13px; cursor: pointer; text-align: left;
+  transition: transform 0.15s, background 0.15s;
+}
+.cs-choices-card:active { transform: scale(0.96); background: rgba(255,107,157,0.1); }
+.cs-choices-card:disabled { opacity: 0.5; cursor: not-allowed; }
+.cs-choices-letter {
+  display: flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; border-radius: 6px; flex-shrink: 0;
+  background: var(--primary); color: white;
+  font-size: 11px; font-weight: 700;
+}
+
+/* ── 5. Input Area ─────────────────────────────── */
+
+.cs-input-area {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px; padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+  background: rgba(255,255,255,0.95);
+  border-top: 1px solid var(--border); flex-shrink: 0;
+}
+.cs-icon-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; background: none; border: 1px solid var(--border);
+  border-radius: 50%; cursor: pointer; color: var(--text-secondary);
+  transition: background 0.15s;
+}
+.cs-icon-btn:active { background: var(--bg-active); }
+.cs-input {
+  flex: 1; padding: 10px 14px;
+  background: rgba(254,247,255,0.8);
+  border: 1px solid transparent; border-radius: 99px;
+  font-size: 14px; color: var(--text-primary); outline: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+.cs-input:focus { border-color: var(--primary); background: white; }
+.cs-input::placeholder { color: var(--text-muted); }
+.cs-input:disabled { opacity: 0.5; }
+.cs-send-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, #ff6b9d 0%, #e91e8c 100%);
+  border: none; border-radius: 50%; color: white; cursor: pointer;
+  box-shadow: 0 2px 8px rgba(255,107,157,0.3);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.cs-send-btn:active { transform: scale(0.9); }
+.cs-send-btn:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
+
+/* ── 6. Dashboard Drawer — 手册（左侧抽屉） ───── */
+
+.cs-dash-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 50; }
+.cs-dash-drawer {
+  position: absolute; top: 0; left: 0; bottom: 0;
+  width: 85vw; max-width: 380px;
+  background: linear-gradient(180deg, #FFFFFF 0%, #FFF8FA 50%, #FFF5F7 100%);
+  display: flex; flex-direction: column;
+  box-shadow: 4px 0 32px rgba(0,0,0,0.08);
+}
+.cs-dash-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px; border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+.cs-dash-title { font-size: 15px; font-weight: 700; color: var(--primary); letter-spacing: 1px; }
+.cs-dash-close {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: rgba(0,0,0,0.04); border: none;
+  font-size: 13px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-muted);
+}
+.cs-dash-scroll {
+  flex: 1; overflow-y: auto; padding: 12px;
+  -webkit-overflow-scrolling: touch;
+}
+.cs-dash-scroll::-webkit-scrollbar { width: 3px; }
+.cs-dash-scroll::-webkit-scrollbar-thumb { background: rgba(255,107,157,0.15); border-radius: 3px; }
+.cs-dash-section {
+  background: rgba(255,255,255,0.7);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0,0,0,0.05);
+  border-radius: 16px; padding: 12px; margin-bottom: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
+/* dash scene thumbnails */
+.cs-dash-scene-scroll {
+  display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px;
+  -webkit-overflow-scrolling: touch; scrollbar-width: none;
+}
+.cs-dash-scene-scroll::-webkit-scrollbar { display: none; }
+
+/* ── 7. Record Sheet — 事件记录（右侧抽屉） ───── */
+
+.cs-records-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 50; }
+.cs-records-sheet {
+  position: fixed; top: 0; right: 0; bottom: 0; z-index: 51;
+  width: 85vw; max-width: 380px; background: #FFFFFF;
+  display: flex; flex-direction: column;
+  box-shadow: -4px 0 24px rgba(0,0,0,0.08);
+}
+.cs-records-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px; border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+.cs-records-title { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+.cs-records-close {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: rgba(0,0,0,0.04); border: none;
+  font-size: 13px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-muted);
+}
+.cs-records-timeline { flex: 1; overflow-y: auto; padding: 12px 16px; position: relative; }
+.cs-records-timeline::before {
+  content: ''; position: absolute; top: 0; left: 28px; bottom: 0;
+  width: 2px; background: rgba(255,107,157,0.12);
+}
+.cs-records-item { display: flex; gap: 12px; padding: 10px 0; position: relative; }
+.cs-records-dot {
+  width: 8px; height: 8px; border-radius: 50%; background: #ff6b9d;
+  flex-shrink: 0; margin-top: 4px;
+  box-shadow: 0 0 6px rgba(255,107,157,0.4); z-index: 1;
+}
+.cs-records-body { flex: 1; min-width: 0; }
+.cs-records-meta { font-size: 10px; color: var(--text-muted); }
+.cs-records-event-title { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-top: 2px; }
+.cs-records-content { font-size: 12px; color: var(--text-secondary); margin-top: 2px; line-height: 1.5; }
+
+/* ── 8. Character Dossier — 角色档案（全屏右滑入） */
+
+.cs-dossier {
+  position: fixed; inset: 0; z-index: 52;
+  background: #FFF5F7; overflow-y: auto;
+}
+
+@keyframes csBreathe {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.02); }
+}
+
+/* ── 9. Relation Graph — SVG 环形关系图 ────────── */
+
+.cs-relation-wrap { width: 100%; max-width: 380px; margin: 0 auto 16px; }
+
+/* ── 10. Toast Notification ────────────────────── */
+
+.cs-toast {
+  position: fixed; bottom: 72px; left: 50%; transform: translateX(-50%);
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,107,157,0.12);
+  border-radius: 20px; padding: 8px 22px;
+  font-size: 13px; font-weight: 500; color: var(--text-primary);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  z-index: 100; white-space: nowrap;
+  animation: csToastIn 0.3s ease-out, csToastOut 0.3s ease-in 1.7s forwards;
+}
+@keyframes csToastIn {
+  0%   { opacity: 0; transform: translateX(-50%) translateY(12px); }
+  100% { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+@keyframes csToastOut {
+  0%   { opacity: 1; transform: translateX(-50%) translateY(0); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(12px); }
+}
+
+/* ── 11. Letter Card — 欢迎信（首条消息） ──────── */
+
+.cs-letter {
+  position: relative; align-self: center; width: 92%; max-width: 340px;
+  background: rgba(255,255,255,0.8);
+  border: 1px solid rgba(255,107,157,0.12);
+  border-radius: 14px; padding: 24px 20px;
+  margin-bottom: 12px; overflow: hidden;
+}
+.cs-letter::before {
+  content: ''; position: absolute;
+  top: 8px; left: 8px; right: 8px; bottom: 8px;
+  border: 1px dashed rgba(255,107,157,0.1);
+  border-radius: 10px; pointer-events: none;
+}
+.cs-letter-watermark {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 80px; opacity: 0.03; pointer-events: none;
+}
+.cs-letter-msg-title {
+  font-size: 16px; font-weight: 700; color: var(--primary);
+  text-align: center; margin-bottom: 12px; letter-spacing: 1px;
+}
+.cs-letter-msg-body { font-size: 13px; color: var(--text-secondary); line-height: 1.8; font-style: italic; }
+.cs-letter-sign { font-size: 12px; color: var(--primary); text-align: right; margin-top: 16px; font-weight: 500; }
+
+/* ── 12. Inventory Sheet — 背包底部弹出 ────────── */
+
+.cs-inventory-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 55;
+  display: flex; align-items: flex-end; justify-content: center;
+}
+.cs-inventory-sheet {
+  width: 100%; max-width: 480px; max-height: 60vh;
+  background: linear-gradient(180deg, #FFFFFF, #FFF5F7);
+  border-radius: 20px 20px 0 0;
+  display: flex; flex-direction: column;
+  animation: csSheetUp 0.3s ease-out;
+}
+@keyframes csSheetUp {
+  0%   { transform: translateY(100%); }
+  100% { transform: translateY(0); }
+}
+.cs-inventory-handle { width: 36px; height: 4px; border-radius: 2px; background: rgba(0,0,0,0.1); margin: 10px auto; }
+.cs-inventory-header {
+  display: flex; align-items: center; justify-content: space-between; padding: 4px 16px 12px;
+}
+.cs-inventory-title { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+.cs-inventory-close {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: rgba(0,0,0,0.04); border: none;
+  font-size: 12px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-muted);
+}
+.cs-inventory-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 8px; padding: 0 16px 24px; overflow-y: auto;
+}
+.cs-inventory-item {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 4px; padding: 12px 8px;
+  background: rgba(255,240,243,0.5);
+  border: 1px solid rgba(0,0,0,0.04);
+  border-radius: 14px; position: relative;
+  cursor: pointer; transition: background 0.15s;
+}
+.cs-inventory-item:active { background: rgba(255,107,157,0.08); }
+.cs-inventory-icon { font-size: 28px; }
+.cs-inventory-name { font-size: 11px; color: var(--text-secondary); font-weight: 500; text-align: center; }
+.cs-inventory-count {
+  position: absolute; top: 4px; right: 6px;
+  font-size: 10px; font-weight: 600; color: var(--primary);
+  background: rgba(255,107,157,0.08); padding: 1px 6px; border-radius: 6px;
+}
+.cs-inventory-empty { grid-column: 1 / -1; text-align: center; padding: 32px 0; font-size: 13px; color: var(--text-muted); }
+
+/* ── 13. Scene Hero — 场景Tab大图 ──────────────── */
+
+.cs-scene-hero {
+  position: relative; border-radius: 16px; overflow: hidden; margin-bottom: 12px;
+}
+.cs-scene-hero img {
+  width: 100%; display: block;
+}
+.cs-scene-hero-overlay {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  padding: 32px 16px 16px;
+  background: linear-gradient(transparent, rgba(0,0,0,0.7));
+  color: white;
+}
+
+/* ── 14. Location Tag — 场景列表按钮 ───────────── */
+
+.cs-location-tag {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 14px; border-radius: 12px;
+  background: rgba(255,255,255,0.8);
+  border: 1px solid var(--border);
+  cursor: pointer; transition: all 0.15s; width: 100%;
+  color: var(--text-primary); font-size: 14px;
+}
+.cs-location-tag:active:not(:disabled) { background: rgba(255,107,157,0.06); }
+.cs-location-tag:disabled { opacity: 0.4; cursor: not-allowed; }
+.cs-location-active {
+  border-color: rgba(255,107,157,0.3);
+  background: rgba(255,107,157,0.04);
+}
+
+/* ── 15. Scrollbar ─────────────────────────────── */
+
+.cs-scrollbar::-webkit-scrollbar { width: 4px; }
+.cs-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.cs-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,107,157,0.15); border-radius: 2px; }
+
+/* ── 16. Menu + Ending ─────────────────────────── */
+
+.cs-menu-overlay {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+}
+.cs-menu-panel {
+  background: white; border-radius: 16px; padding: 24px 20px;
+  min-width: 280px; max-width: 90%; text-align: center;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+}
+.cs-menu-btn {
+  display: block; width: 100%; padding: 12px; margin-bottom: 6px;
+  background: none; border: none; border-radius: 10px;
+  font-size: 14px; color: var(--text-primary); cursor: pointer;
+  transition: background 0.15s; text-align: center;
+}
+.cs-menu-btn:hover { background: var(--bg-hover); }
+.cs-menu-danger { color: #ef4444; }
+
+.cs-ending-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(254,247,255,0.85); backdrop-filter: blur(8px);
+  display: flex; align-items: center; justify-content: center;
+}
+.cs-ending-card {
+  background: linear-gradient(135deg, #ffffff 0%, #fef7ff 50%, #ffffff 100%);
+  border: 1px solid rgba(255,107,157,0.2);
+  border-radius: 20px; padding: 36px 28px;
+  max-width: 380px; width: 90%; text-align: center;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.1);
+}
+.cs-ending-type {
+  font-size: 12px; font-weight: 600; letter-spacing: 2px;
+  margin-bottom: 8px;
+}
+.cs-ending-title {
+  font-size: 22px; font-weight: 700; color: var(--text-primary);
+  margin-bottom: 12px;
+}
+.cs-ending-desc {
+  font-size: 14px; line-height: 1.8; color: var(--text-secondary);
+  margin-bottom: 24px;
+}
+.cs-ending-btn {
+  padding: 10px 32px; border-radius: 99px; border: none;
+  background: linear-gradient(135deg, #ff6b9d 0%, #e91e8c 100%);
+  color: white; font-size: 14px; font-weight: 600; cursor: pointer;
+  box-shadow: 0 4px 16px rgba(255,107,157,0.3);
+  margin: 0 6px;
+}
+.cs-ending-btn-outline {
+  padding: 10px 32px; border-radius: 99px;
+  border: 1px solid rgba(255,107,157,0.3);
+  background: transparent; color: var(--text-secondary);
+  font-size: 14px; font-weight: 500; cursor: pointer;
+  margin: 0 6px;
+}
+
+/* ── 17. Audio wave animation ──────────────────── */
+@keyframes cs-wave {
+  0%   { height: 20%; }
+  100% { height: 100%; }
+}

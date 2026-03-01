@@ -4,21 +4,26 @@ L2 | 父级: /10list-chongsheng/CLAUDE.md
 
 ## 成员清单
 
-- `character-panel.tsx`: PC 端左侧面板，角色选择/数值展示/场景切换
-- `dialogue-panel.tsx`: PC 端中间对话面板，消息列表/输入区/HighlightModal 入口
-- `side-panel.tsx`: PC 端右侧面板，道具背包/关系总览
-- `mobile-layout.tsx`: 移动端自适应布局
-- `highlight-modal.tsx`: 高光时刻弹窗，5阶段(分析→选择→风格→生成→结果)，主色 #ff6b9d，白色轻量主题
+- `app-shell.tsx`: 游戏主框架 — Header + Tab路由(dialogue/scene/character) + 5键TabBar + 三向手势 + DashboardDrawer + RecordSheet + Toast
+- `dashboard-drawer.tsx`: 重生手册(左抽屉) — Reorder.Group 7段可拖拽排序：扉页+全局数值+角色轮播+场景缩略+章节目标+道具格+音乐
+- `tab-dialogue.tsx`: 对话Tab — 富消息路由(LetterCard/SceneCard/RoundCard/NpcBubble/PlayerBubble/SystemBubble) + CollapsibleChoices + InventorySheet + InputArea
+- `tab-scene.tsx`: 场景Tab — 场景大图(9:16) + 描述 + 地点列表(锁定/解锁/当前)
+- `tab-character.tsx`: 人物Tab — RelationGraph SVG + 全局数值面板 + 异构属性列表 + CharacterDossier 全屏档案
 
 ## 依赖关系
 
 - 全部依赖 `@/lib/store` 的 useGameStore
-- `highlight-modal.tsx` 依赖 `@/lib/highlight` 全部导出
+- `tab-dialogue.tsx` 依赖 `@/lib/store` 的 SCENES, ITEMS, parseStoryParagraph
+- `tab-scene.tsx` 依赖 `@/lib/store` 的 SCENES
+- `dashboard-drawer.tsx` 依赖 `@/lib/store` 的 SCENES, ITEMS, CHAPTERS + framer-motion Reorder
+- `app-shell.tsx` 依赖 `@/lib/store` 的 PERIODS, MAX_ROUNDS, getCurrentChapter + `@/lib/bgm`
+- 图标统一使用 `@phosphor-icons/react`（Notebook/Scroll/ChatCircleDots/MapTrifold/Users/MusicNotes/List/Backpack/PaperPlaneRight/GameController/CaretUp/CaretDown/Play/Pause）
 
 ## 样式约定
 
 - CSS class 前缀: `cs-`
 - 主题色: #ff6b9d (粉色), #e91e8c (深粉), 白底轻量风格
-- highlight-modal 使用白色背景 + subtle shadow，非暗色玻璃
+- 样式来源: globals.css (基础) + opening.css (开场) + rich-cards.css (富UI组件)
+- 桌面端 430px 居中壳（`@media (min-width: 431px)`）
 
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md

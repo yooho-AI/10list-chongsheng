@@ -1,24 +1,21 @@
 /**
- * [INPUT]: 依赖 @/lib/store, @/lib/bgm, @/lib/hooks, @/styles/globals.css, 所有游戏组件
+ * [INPUT]: 依赖 store.ts 状态，styles/*.css
  * [OUTPUT]: 对外提供 App 根组件
- * [POS]: 应用入口，管理开场/游戏/结局三态
+ * [POS]: 根组件: 开场(性别选择+姓名输入+NPC预览) + GameScreen + EndingModal + MenuOverlay
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 import { useState, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { useGameStore, ENDINGS, PERIODS, STORY_INFO, MAX_ROUNDS } from '@/lib/store'
-import { useIsMobile } from '@/lib/hooks'
-import { useBgm } from '@/lib/bgm'
-import DialoguePanel from '@/components/game/dialogue-panel'
-import LeftPanel from '@/components/game/character-panel'
-import RightPanel from '@/components/game/side-panel'
-import MobileGameLayout from '@/components/game/mobile-layout'
-import '@/styles/globals.css'
+import { AnimatePresence, motion } from 'framer-motion'
+import { useGameStore, ENDINGS, ENDING_TYPE_MAP, STORY_INFO } from '@/lib/store'
+import { trackGameStart, trackGameContinue } from '@/lib/analytics'
+import { initBGM } from '@/lib/bgm'
+import AppShell from '@/components/game/app-shell'
+import './styles/globals.css'
+import './styles/opening.css'
+import './styles/rich-cards.css'
 
-// ============================================================
-// NPC 预览数据 — 开始画面用，与 store 解耦
-// ============================================================
+// ── NPC 预览数据 ──────────────────────────────────
 
 const TRAINEE_PREVIEW = [
   { id: 'xiaoman', name: '林小满', color: '#ec4899', icon: '👩', role: '生母' },
@@ -26,35 +23,19 @@ const TRAINEE_PREVIEW = [
   { id: 'students', name: '围观学生', color: '#a855f7', icon: '📱', role: '吃瓜' },
 ] as const
 
-// ============================================================
-// 结局类型映射 — 消除 if/else 分支
-// ============================================================
+// ── Opening Screen ──────────────────────────────────
 
-const ENDING_TYPE_MAP: Record<string, { label: string; color: string; icon: string }> = {
-  TE: { label: '⭐ True Ending', color: '#ffd700', icon: '👑' },
-  HE: { label: '🎉 Happy Ending', color: '#ff6b9d', icon: '🌟' },
-  BE: { label: '💀 Bad Ending', color: '#6b7280', icon: '💔' },
-  NE: { label: '🌙 Normal Ending', color: '#f59e0b', icon: '🌙' },
-}
-
-// ============================================================
-// 开始界面 — 明亮漫画风
-// ============================================================
-
-function StartScreen() {
-  const setPlayerInfo = useGameStore((s) => s.setPlayerInfo)
-  const initGame = useGameStore((s) => s.initGame)
-  const loadGame = useGameStore((s) => s.loadGame)
-  const hasSave = useGameStore((s) => s.hasSave)
-  const { toggle, isPlaying } = useBgm()
-
+function OpeningScreen({ onStart }: { onStart: (gender: 'male' | 'female', name: string) => void }) {
   const [gender, setGender] = useState<'male' | 'female'>('male')
   const [name, setName] = useState('')
+  const hasSave = useGameStore((s) => s.hasSave)
+  const loadGame = useGameStore((s) => s.loadGame)
 
-  const handleStart = () => {
-    setPlayerInfo(gender, name || '玩家')
-    initGame()
-  }
+  const handleContinue = useCallback(() => {
+    initBGM()
+    trackGameContinue()
+    loadGame()
+  }, [loadGame])
 
   return (
     <div className="flex h-screen items-center justify-center bg-gradient-to-br from-[#fef7ff] via-white to-[#fef7ff]">
@@ -64,7 +45,6 @@ function StartScreen() {
         transition={{ duration: 0.8 }}
         className="w-full max-w-lg px-6 text-center"
       >
-        {/* 标题 */}
         <motion.div
           initial={{ scale: 0.8 }}
           animate={{ scale: 1 }}
@@ -83,7 +63,7 @@ function StartScreen() {
           {STORY_INFO.description}
         </p>
 
-        {/* 性别选择 — 二选 */}
+        {/* 性别选择 */}
         <div className="mb-4 flex justify-center gap-3">
           {([
             { value: 'male' as const, label: '男孩' },
@@ -154,7 +134,10 @@ function StartScreen() {
           <motion.button
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
-            onClick={handleStart}
+            onClick={() => {
+              initBGM()
+              onStart(gender, name.trim() || '玩家')
+            }}
             className="w-full rounded-full px-8 py-3 text-sm font-medium text-white shadow-lg transition-shadow"
             style={{
               background: 'linear-gradient(135deg, #ff6b9d 0%, #e91e8c 100%)',
@@ -168,7 +151,7 @@ function StartScreen() {
             <motion.button
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
-              onClick={() => loadGame()}
+              onClick={handleContinue}
               className="w-full rounded-full border px-8 py-3 text-sm font-medium transition-colors"
               style={{
                 borderColor: 'rgba(255, 107, 157, 0.2)',
@@ -179,264 +162,142 @@ function StartScreen() {
             </motion.button>
           )}
         </div>
-
-        {/* 音乐按钮 */}
-        <button
-          onClick={(e) => toggle(e)}
-          className="mt-4 text-xs text-[#94a3b8] transition-colors hover:text-[#64748b]"
-        >
-          {isPlaying ? '🔊 音乐开' : '🔇 音乐关'}
-        </button>
       </motion.div>
     </div>
   )
 }
 
-// ============================================================
-// 顶部状态栏 — 回合 + 社死 + 分贝
-// ============================================================
-
-function HeaderBar({ onMenuClick }: { onMenuClick: () => void }) {
-  const currentRound = useGameStore((s) => s.currentRound)
-  const currentPeriodIndex = useGameStore((s) => s.currentPeriodIndex)
-  const socialDeath = useGameStore((s) => s.socialDeath)
-  const cryDecibel = useGameStore((s) => s.cryDecibel)
-  const { toggle, isPlaying } = useBgm()
-
-  const period = PERIODS[currentPeriodIndex]
-
-  return (
-    <header
-      className="relative z-10 flex min-h-[44px] items-center justify-between gap-2 px-4 py-2"
-      style={{ background: 'var(--bg-primary)' }}
-    >
-      {/* 左侧：回合 + 时段 */}
-      <div className="flex items-center gap-3">
-        <span className="text-sm font-medium" style={{ color: 'var(--primary)' }}>
-          👶 回合{currentRound}/{MAX_ROUNDS}
-        </span>
-        <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-          {period?.icon} {period?.name}
-        </span>
-      </div>
-
-      {/* 右侧：社死 + 分贝 + 音乐 + 菜单 */}
-      <div className="flex items-center gap-1">
-        <span className="rounded-md px-2 py-1 text-xs" style={{ color: '#e91e8c' }}>
-          😳社死{socialDeath}
-        </span>
-
-        <span className="rounded-md px-2 py-1 text-xs" style={{ color: '#3b82f6' }}>
-          🔊分贝{cryDecibel}
-        </span>
-
-        <button
-          onClick={(e) => toggle(e)}
-          className="rounded px-3 py-2 text-sm transition-all"
-          style={{ color: 'var(--text-muted)' }}
-          title={isPlaying ? '关闭音乐' : '开启音乐'}
-        >
-          {isPlaying ? '🔊' : '🔇'}
-        </button>
-
-        <button
-          onClick={onMenuClick}
-          className="rounded px-3 py-2 text-sm transition-all"
-          style={{ color: 'var(--text-muted)' }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,107,157,0.08)' }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
-          title="菜单"
-        >
-          ☰
-        </button>
-      </div>
-    </header>
-  )
-}
-
-// ============================================================
-// 菜单弹窗
-// ============================================================
-
-function MenuOverlay({ onClose }: { onClose: () => void }) {
-  const saveGame = useGameStore((s) => s.saveGame)
-  const loadGame = useGameStore((s) => s.loadGame)
-  const resetGame = useGameStore((s) => s.resetGame)
-
-  return (
-    <div className="cs-overlay" onClick={onClose}>
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        className="cs-modal"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h2
-          style={{ color: 'var(--text-primary)', fontSize: 16, fontWeight: 600, margin: '0 0 16px', textAlign: 'center' }}
-        >
-          游戏菜单
-        </h2>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <button className="cs-modal-btn" onClick={() => { saveGame(); onClose() }}>💾 保存游戏</button>
-          <button className="cs-modal-btn" onClick={() => { loadGame(); onClose() }}>📂 读取存档</button>
-          <button className="cs-modal-btn" onClick={() => resetGame()}>🏠 返回标题</button>
-          <button className="cs-modal-btn" onClick={() => window.open('https://yooho.ai/', '_blank')}>🌐 返回主页</button>
-          <button className="cs-modal-btn" onClick={onClose}>▶️ 继续游戏</button>
-        </div>
-      </motion.div>
-    </div>
-  )
-}
-
-// ============================================================
-// 结局弹窗 — 数据驱动，无 if/else
-// ============================================================
+// ── Ending Modal ────────────────────────────────────
 
 function EndingModal() {
   const endingType = useGameStore((s) => s.endingType)
   const resetGame = useGameStore((s) => s.resetGame)
+  const clearSave = useGameStore((s) => s.clearSave)
+
+  if (!endingType) return null
 
   const ending = ENDINGS.find((e) => e.id === endingType)
   if (!ending) return null
 
-  const meta = ENDING_TYPE_MAP[ending.type] ?? ENDING_TYPE_MAP.NE
+  const typeInfo = ENDING_TYPE_MAP[ending.type]
 
   return (
-    <div className="cs-ending-overlay">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ duration: 0.5, type: 'spring' }}
-        className="cs-ending-modal"
-      >
-        <div style={{ fontSize: 48, marginBottom: 16 }}>
-          {meta.icon}
-        </div>
-        <div style={{ fontSize: 12, fontWeight: 600, color: meta.color, marginBottom: 8, letterSpacing: 2 }}>
-          {meta.label}
-        </div>
-        <h2 style={{ fontSize: 22, fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 16px', letterSpacing: 1 }}>
-          {ending.name}
-        </h2>
-        <p style={{ fontSize: 14, lineHeight: 1.8, color: 'var(--text-secondary)', marginBottom: 24 }}>
-          {ending.description}
-        </p>
-        <button
-          onClick={() => resetGame()}
-          style={{
-            padding: '10px 32px',
-            borderRadius: 99,
-            border: 'none',
-            background: 'linear-gradient(135deg, #ff6b9d 0%, #e91e8c 100%)',
-            color: 'white',
-            fontSize: 14,
-            fontWeight: 600,
-            cursor: 'pointer',
-            boxShadow: '0 4px 16px rgba(255, 107, 157, 0.3)',
-          }}
-        >
-          返回标题
-        </button>
-      </motion.div>
-    </div>
-  )
-}
-
-// ============================================================
-// 通知
-// ============================================================
-
-function Notification({ text, type }: { text: string; type: string }) {
-  return (
-    <div className={`cs-notification ${type}`}>
-      <span>{type === 'success' ? '✓' : type === 'error' ? '✕' : type === 'warning' ? '⚠' : 'ℹ'}</span>
-      <span>{text}</span>
-    </div>
-  )
-}
-
-// ============================================================
-// PC 游戏主屏幕 — 三栏布局
-// ============================================================
-
-function GameScreen() {
-  const [showMenu, setShowMenu] = useState(false)
-  const [notification, setNotification] = useState<{ text: string; type: string } | null>(null)
-  const endingType = useGameStore((s) => s.endingType)
-
-  const showNotif = useCallback((text: string, type = 'info') => {
-    setNotification({ text, type })
-    setTimeout(() => setNotification(null), 2000)
-  }, [])
-  void showNotif
-
-  return (
-    <div
-      className="flex h-screen flex-col"
-      style={{ background: 'var(--bg-secondary)', fontFamily: 'var(--font)' }}
+    <motion.div
+      className="cs-ending-overlay"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
     >
-      <HeaderBar onMenuClick={() => setShowMenu(true)} />
-
-      <main className="flex flex-1 overflow-hidden">
-        <aside className="w-[280px] shrink-0">
-          <LeftPanel />
-        </aside>
-        <section className="flex min-w-0 flex-1 flex-col overflow-hidden">
-          <DialoguePanel />
-        </section>
-        <aside className="shrink-0">
-          <RightPanel />
-        </aside>
-      </main>
-
-      <AnimatePresence>
-        {showMenu && <MenuOverlay onClose={() => setShowMenu(false)} />}
-      </AnimatePresence>
-
-      {endingType && <EndingModal />}
-
-      <AnimatePresence>
-        {notification && (
-          <motion.div
-            key="notif"
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
+      <motion.div
+        className="cs-ending-card"
+        style={{ background: typeInfo.gradient }}
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ delay: 0.3 }}
+      >
+        <div className="cs-ending-type">{typeInfo.label}</div>
+        <div className="cs-ending-title">{ending.name}</div>
+        <p className="cs-ending-desc">{ending.description}</p>
+        <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+          <button
+            className="cs-ending-btn"
+            onClick={() => { clearSave(); resetGame() }}
           >
-            <Notification text={notification.text} type={notification.type} />
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+            返回标题
+          </button>
+          <button
+            className="cs-ending-btn-secondary"
+            onClick={() => {
+              useGameStore.setState({ endingType: null })
+            }}
+          >
+            继续探索
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
   )
 }
 
-// ============================================================
-// App 根组件
-// ============================================================
+// ── Menu Overlay ────────────────────────────────────
+
+function MenuOverlay({
+  show,
+  onClose,
+}: {
+  show: boolean
+  onClose: () => void
+}) {
+  const saveGame = useGameStore((s) => s.saveGame)
+  const loadGame = useGameStore((s) => s.loadGame)
+  const resetGame = useGameStore((s) => s.resetGame)
+  const clearSave = useGameStore((s) => s.clearSave)
+  const [toast, setToast] = useState('')
+
+  if (!show) return null
+
+  const handleSave = () => {
+    saveGame()
+    setToast('已保存')
+    setTimeout(() => setToast(''), 2000)
+  }
+
+  return (
+    <motion.div
+      className="cs-menu-overlay"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+    >
+      <motion.div
+        className="cs-menu-panel"
+        initial={{ y: 50, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>
+          {STORY_INFO.title}
+        </h3>
+        <button className="cs-menu-btn" onClick={handleSave}>💾 保存进度</button>
+        <button className="cs-menu-btn" onClick={() => { loadGame(); onClose() }}>📂 读取存档</button>
+        <button className="cs-menu-btn cs-menu-danger" onClick={() => { clearSave(); resetGame() }}>
+          🔄 重新开始
+        </button>
+        <button className="cs-menu-btn" onClick={onClose}>✕ 继续游戏</button>
+
+        {toast && <div className="cs-toast" style={{ position: 'static', marginTop: 12, textAlign: 'center' }}>{toast}</div>}
+      </motion.div>
+    </motion.div>
+  )
+}
+
+// ── App Root ────────────────────────────────────────
 
 export default function App() {
   const gameStarted = useGameStore((s) => s.gameStarted)
-  const isMobile = useIsMobile()
+  const setPlayerInfo = useGameStore((s) => s.setPlayerInfo)
+  const initGame = useGameStore((s) => s.initGame)
+  const [showMenu, setShowMenu] = useState(false)
+
+  const handleStart = (gender: 'male' | 'female', name: string) => {
+    trackGameStart()
+    setPlayerInfo(gender, name)
+    initGame()
+  }
+
+  if (!gameStarted) {
+    return <OpeningScreen onStart={handleStart} />
+  }
 
   return (
-    <AnimatePresence mode="wait">
-      {gameStarted ? (
-        <motion.div
-          key="game"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5 }}
-          className="h-screen"
-        >
-          {isMobile ? <MobileGameLayout /> : <GameScreen />}
-        </motion.div>
-      ) : (
-        <motion.div key="start" exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
-          <StartScreen />
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <>
+      <AppShell onMenuOpen={() => setShowMenu(true)} />
+      <EndingModal />
+      <AnimatePresence>
+        {showMenu && (
+          <MenuOverlay show={showMenu} onClose={() => setShowMenu(false)} />
+        )}
+      </AnimatePresence>
+    </>
   )
 }

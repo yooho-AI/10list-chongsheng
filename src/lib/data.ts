@@ -31,7 +31,7 @@ export interface Character {
   id: string
   name: string
   avatar: string
-  fullImage: string
+  portrait: string
   gender: 'female' | 'male'
   age: number
   title: string
@@ -101,13 +101,23 @@ export interface Message {
   content: string
   character?: string
   timestamp: number
+  type?: 'scene-transition' | 'round-change'
+  sceneId?: string
+  roundInfo?: { round: number; period: string; chapter: string }
+}
+
+export interface StoryRecord {
+  id: string
+  round: number
+  period: string
+  title: string
+  content: string
 }
 
 // ============================================================
 // 常量
 // ============================================================
 
-/* 时段系统 — 100% 通用 */
 export const PERIODS: TimePeriod[] = [
   { index: 0, name: '清晨', icon: '🌅', hours: '06:00-08:00' },
   { index: 1, name: '上午', icon: '☀️', hours: '09:00-11:00' },
@@ -121,16 +131,29 @@ export const MAX_ACTION_POINTS = 6
 export const MAX_ROUNDS = 30
 export const TOTAL_CHAPTERS = 5
 
+export const QUICK_ACTIONS: string[] = [
+  '小猫叫（40分贝）',
+  '普通婴儿哭（70分贝）',
+  '破音嘶吼（90分贝）',
+  '装死不动',
+]
+
+export const ENDING_TYPE_MAP: Record<string, { label: string; gradient: string }> = {
+  TE: { label: '真·结局', gradient: 'linear-gradient(135deg, #fef7ff 0%, #ffe0f0 100%)' },
+  HE: { label: '圆满结局', gradient: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)' },
+  NE: { label: '普通结局', gradient: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)' },
+  BE: { label: '悲惨结局', gradient: 'linear-gradient(135deg, #fef2f2 0%, #fecaca 100%)' },
+}
+
 // ============================================================
 // 角色数据
 // ============================================================
 
-/* 生母 — 林小满 */
 const LINXIAOMAN: Character = {
   id: 'xiaoman',
   name: '林小满',
   avatar: '👩',
-  fullImage: '/characters/xiaoman.jpg',
+  portrait: '/characters/xiaoman.jpg',
   gender: 'female',
   age: 18,
   title: '花臂精神小妹',
@@ -150,12 +173,11 @@ const LINXIAOMAN: Character = {
   initialStats: { bond: 10, panic: 80, health: 50 },
 }
 
-/* 教导主任 — 王建国 */
 const WANGJIANGUO: Character = {
   id: 'jianguo',
   name: '王建国',
   avatar: '👨‍🏫',
-  fullImage: '/characters/jianguo.jpg',
+  portrait: '/characters/jianguo.jpg',
   gender: 'male',
   age: 45,
   title: '铁面教导主任',
@@ -174,12 +196,11 @@ const WANGJIANGUO: Character = {
   initialStats: { favor: 0, patience: 60 },
 }
 
-/* 围观学生 — 群体NPC */
 const STUDENTS: Character = {
   id: 'students',
   name: '围观学生',
   avatar: '📱',
-  fullImage: '/characters/students.jpg',
+  portrait: '/characters/students.jpg',
   gender: 'female',
   age: 17,
   title: '吃瓜群众',
@@ -197,7 +218,6 @@ const STUDENTS: Character = {
   initialStats: { crowd: 0 },
 }
 
-/* 角色工厂 */
 export function buildCharacters(
   _playerGender: 'male' | 'female'
 ): Record<string, Character> {
@@ -208,7 +228,6 @@ export function buildCharacters(
   }
 }
 
-/* 初始数值构建 */
 export function buildInitialStats(
   characters: Record<string, Character>
 ): Record<string, CharacterStats> {
@@ -326,7 +345,7 @@ export const ITEMS: Record<string, GameItem> = {
 }
 
 // ============================================================
-// 章节数据 — 章节推进制（按回合数划分）
+// 章节数据
 // ============================================================
 
 export const CHAPTERS: Chapter[] = [
