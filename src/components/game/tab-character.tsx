@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 依赖 store.ts 状态（角色/属性）
  * [OUTPUT]: 对外提供 TabCharacter 组件
- * [POS]: 人物Tab：立绘 + 异构属性 + SVG关系图 + 角色列表 + 全屏档案
+ * [POS]: 人物Tab：2x2角色网格(聊天按钮+mini好感条) + SVG关系图 + CharacterDossier 全屏档案 + CharacterChat 私聊
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -82,7 +82,7 @@ function RelationGraph({
   )
 }
 
-// ── Character Dossier (Full-screen) ─────────────────
+// ── Character Dossier (overlay+sheet) ─────────────────
 
 function CharacterDossier({
   char,
@@ -98,101 +98,112 @@ function CharacterDossier({
   const level = getStatLevel(primaryVal)
 
   return (
-    <motion.div
-      className={`${P}-dossier`}
-      initial={{ x: '100%' }}
-      animate={{ x: 0 }}
-      exit={{ x: '100%' }}
-      transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-    >
-      <button
-        onClick={onClose}
-        style={{
-          position: 'absolute', top: 12, right: 12, zIndex: 10,
-          background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%',
-          width: 36, height: 36, color: '#fff', fontSize: 18, cursor: 'pointer',
-        }}
-      >
-        ✕
-      </button>
-
-      {/* Portrait */}
+    <>
       <motion.div
-        style={{ height: '50vh', overflow: 'hidden', position: 'relative' }}
-        animate={{ scale: [1, 1.02, 1] }}
-        transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+        className={`${P}-dossier-overlay`}
+        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 51, overflow: 'visible' }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+      />
+      <motion.div
+        className={`${P}-records-sheet`}
+        style={{ zIndex: 52, overflowY: 'auto' }}
+        initial={{ x: '100%' }}
+        animate={{ x: 0 }}
+        exit={{ x: '100%' }}
+        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
       >
-        <img
-          src={char.portrait}
-          alt={char.name}
-          style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top' }}
-        />
-        <div style={{
-          position: 'absolute', bottom: 0, left: 0, right: 0, height: '40%',
-          background: 'linear-gradient(transparent, #fef7ff)',
-        }} />
-      </motion.div>
+        <button
+          onClick={onClose}
+          style={{
+            position: 'absolute', top: 12, right: 12, zIndex: 10,
+            background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%',
+            width: 36, height: 36, color: '#fff', fontSize: 18, cursor: 'pointer',
+          }}
+        >
+          ✕
+        </button>
 
-      {/* Info */}
-      <div style={{ padding: '0 16px 24px' }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4 }}>
-          <span style={{ fontSize: 24, fontWeight: 700, color: char.themeColor }}>
-            {char.name}
-          </span>
-          <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-            {char.title} · {char.age}岁
-          </span>
-        </div>
+        {/* Portrait */}
+        <motion.div
+          style={{ height: '50vh', overflow: 'hidden', position: 'relative' }}
+          animate={{ scale: [1, 1.02, 1] }}
+          transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+        >
+          <img
+            src={char.portrait}
+            alt={char.name}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top' }}
+          />
+          <div style={{
+            position: 'absolute', bottom: 0, left: 0, right: 0, height: '40%',
+            background: 'linear-gradient(transparent, #fef7ff)',
+          }} />
+        </motion.div>
 
-        {/* Level stage */}
-        <div style={{
-          display: 'inline-block', padding: '2px 10px', borderRadius: 12,
-          background: `${char.themeColor}20`, color: char.themeColor,
-          fontSize: 12, fontWeight: 600, marginBottom: 12,
-        }}>
-          {level.name}
-        </div>
+        {/* Info */}
+        <div style={{ padding: '0 16px 24px' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4 }}>
+            <span style={{ fontSize: 24, fontWeight: 700, color: char.themeColor }}>
+              {char.name}
+            </span>
+            <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+              {char.title} · {char.age}岁
+            </span>
+          </div>
 
-        {/* All stat bars */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
-          {char.statMetas.map((meta) => {
-            const val = stats[meta.key] ?? 0
-            return (
-              <div key={meta.key}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
-                  <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{meta.icon} {meta.label}</span>
-                  <span style={{ fontSize: 12, fontWeight: 600, color: meta.color }}>{val}</span>
+          {/* Level stage */}
+          <div style={{
+            display: 'inline-block', padding: '2px 10px', borderRadius: 12,
+            background: `${char.themeColor}20`, color: char.themeColor,
+            fontSize: 12, fontWeight: 600, marginBottom: 12,
+          }}>
+            {level.name}
+          </div>
+
+          {/* All stat bars */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+            {char.statMetas.map((meta) => {
+              const val = stats[meta.key] ?? 0
+              return (
+                <div key={meta.key}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
+                    <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{meta.icon} {meta.label}</span>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: meta.color }}>{val}</span>
+                  </div>
+                  <div style={{ height: 6, borderRadius: 3, background: 'rgba(0,0,0,0.06)', overflow: 'hidden' }}>
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${Math.max(0, val)}%` }}
+                      transition={{ duration: 0.8, delay: 0.2 }}
+                      style={{ height: '100%', borderRadius: 3, background: meta.color }}
+                    />
+                  </div>
                 </div>
-                <div style={{ height: 6, borderRadius: 3, background: 'rgba(0,0,0,0.06)', overflow: 'hidden' }}>
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${Math.max(0, val)}%` }}
-                    transition={{ duration: 0.8, delay: 0.2 }}
-                    style={{ height: '100%', borderRadius: 3, background: meta.color }}
-                  />
-                </div>
-              </div>
-            )
-          })}
-        </div>
+              )
+            })}
+          </div>
 
-        {/* Description */}
-        <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 16 }}>
-          {char.description}
-        </p>
-
-        {/* Personality */}
-        <div style={{
-          padding: 12, borderRadius: 12, background: 'white',
-          border: '1px solid var(--border)',
-        }}>
-          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 6 }}>性格特征</div>
-          <p style={{ fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.6, margin: 0 }}>
-            {char.personality}
+          {/* Description */}
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 16 }}>
+            {char.description}
           </p>
+
+          {/* Personality */}
+          <div style={{
+            padding: 12, borderRadius: 12, background: 'white',
+            border: '1px solid var(--border)',
+          }}>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 6 }}>性格特征</div>
+            <p style={{ fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.6, margin: 0 }}>
+              {char.personality}
+            </p>
+          </div>
         </div>
-      </div>
-    </motion.div>
+      </motion.div>
+    </>
   )
 }
 
@@ -201,144 +212,77 @@ function CharacterDossier({
 export default function TabCharacter() {
   const characters = useGameStore((s) => s.characters)
   const characterStats = useGameStore((s) => s.characterStats)
-  const socialDeath = useGameStore((s) => s.socialDeath)
-  const cryDecibel = useGameStore((s) => s.cryDecibel)
-  const currentCharacter = useGameStore((s) => s.currentCharacter)
-  const selectCharacter = useGameStore((s) => s.selectCharacter)
   const playerName = useGameStore((s) => s.playerName)
 
   const [dossierChar, setDossierChar] = useState<string | null>(null)
   const [chatChar, setChatChar] = useState<string | null>(null)
 
-  const selectedChar = currentCharacter ? characters[currentCharacter] : null
-
-  const handleNodeSelect = (id: string) => {
-    selectCharacter(id)
-    setDossierChar(id)
-  }
-
   return (
     <div className={`${P}-scrollbar`} style={{ height: '100%', overflow: 'auto', padding: 12 }}>
-      {/* ── 当前角色立绘 ── */}
-      {selectedChar && (
-        <div
-          style={{
-            borderRadius: 16, overflow: 'hidden', marginBottom: 16,
-            position: 'relative', aspectRatio: '9/16', maxHeight: 320,
-          }}
-          onClick={() => setDossierChar(currentCharacter)}
-        >
-          <img
-            src={selectedChar.portrait}
-            alt={selectedChar.name}
-            style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top' }}
-          />
-          <div style={{
-            position: 'absolute', bottom: 0, left: 0, right: 0,
-            padding: '24px 12px 12px',
-            background: 'linear-gradient(transparent, rgba(0,0,0,0.8))',
-          }}>
-            <div style={{ fontSize: 18, fontWeight: 600, color: selectedChar.themeColor }}>
-              {selectedChar.name}
-            </div>
-            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)' }}>
-              {selectedChar.title} · {selectedChar.age}岁
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── 全局数值面板 ── */}
+      {/* ── 角色网格 (2×2) ── */}
       <h4 style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8, paddingLeft: 4 }}>
-        📊 全局数值
+        👶 重生同伴
       </h4>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 20 }}>
-        {[
-          { label: '社死值', value: socialDeath, max: 100, color: '#e91e8c', icon: '😳' },
-          { label: '哭声分贝', value: cryDecibel, max: 100, color: '#3b82f6', icon: '🔊' },
-        ].map((stat) => (
-          <div key={stat.label} style={{
-            padding: 10, borderRadius: 12, background: 'white', border: '1px solid var(--border)',
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{stat.icon} {stat.label}</span>
-              <span style={{ fontSize: 12, fontWeight: 600, color: stat.color }}>{stat.value}</span>
-            </div>
-            <div style={{ height: 4, borderRadius: 2, background: 'rgba(0,0,0,0.06)' }}>
-              <div style={{
-                height: '100%', borderRadius: 2, background: stat.color,
-                width: `${(stat.value / stat.max) * 100}%`, transition: 'width 0.5s ease',
-              }} />
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* ── NPC 属性（异构） ── */}
-      <h4 style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8, paddingLeft: 4 }}>
-        💗 角色关系
-      </h4>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
-        {Object.entries(characters).map(([id, char], i) => {
+        {Object.entries(characters).map(([id, char]) => {
           const stats = characterStats[id] || {}
+          const primaryKey = char.statMetas[0]?.key || 'favor'
+          const primaryVal = stats[primaryKey] ?? 0
+          const level = getStatLevel(primaryVal)
           return (
-            <motion.div
+            <button
               key={id}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.08 }}
+              onClick={() => setDossierChar(id)}
               style={{
-                display: 'flex', alignItems: 'center', gap: 10,
-                padding: '8px 12px', borderRadius: 12,
-                background: 'white', border: '1px solid var(--border)', cursor: 'pointer',
+                display: 'flex', flexDirection: 'column', alignItems: 'center',
+                padding: 10, borderRadius: 12,
+                background: 'white',
+                border: '1px solid var(--border)',
+                cursor: 'pointer', transition: 'all 0.2s',
+                position: 'relative',
               }}
-              onClick={() => handleNodeSelect(id)}
             >
-              <div style={{ position: 'relative' }}>
-                <img
-                  src={char.portrait}
-                  alt={char.name}
-                  style={{
-                    width: 36, height: 36, borderRadius: '50%',
-                    objectFit: 'cover', objectPosition: 'center top',
-                    border: `2px solid ${char.themeColor}44`,
-                  }}
-                />
-                {/* 聊天按钮 */}
-                <div
-                  onClick={(e) => { e.stopPropagation(); setChatChar(id) }}
-                  style={{
-                    position: 'absolute', bottom: -4, right: -4,
-                    width: 20, height: 20, borderRadius: '50%',
-                    background: `${char.themeColor}18`,
-                    border: `1px solid ${char.themeColor}30`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    cursor: 'pointer', zIndex: 1,
-                  }}
-                >
-                  <ChatCircleDots size={12} weight="fill" color={char.themeColor} />
-                </div>
+              {/* 聊天按钮 */}
+              <div
+                onClick={(e) => { e.stopPropagation(); setChatChar(id) }}
+                style={{
+                  position: 'absolute', top: 6, left: 6,
+                  width: 28, height: 28, borderRadius: '50%',
+                  background: `${char.themeColor}18`,
+                  border: `1px solid ${char.themeColor}30`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', zIndex: 1,
+                }}
+              >
+                <ChatCircleDots size={16} weight="fill" color={char.themeColor} />
               </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 500, color: char.themeColor, marginBottom: 4 }}>
-                  {char.name}
-                </div>
-                {char.statMetas.map((meta) => (
-                  <div key={meta.key} style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
-                    <span style={{ fontSize: 10, color: 'var(--text-muted)', minWidth: 24 }}>{meta.label}</span>
-                    <div style={{ flex: 1, height: 4, borderRadius: 2, background: 'rgba(0,0,0,0.06)' }}>
-                      <div style={{
-                        height: '100%', borderRadius: 2, background: meta.color,
-                        width: `${Math.max(0, stats[meta.key] ?? 0)}%`, transition: 'width 0.5s ease',
-                      }} />
-                    </div>
-                    <span style={{ fontSize: 11, color: 'var(--text-muted)', minWidth: 18, textAlign: 'right' }}>
-                      {stats[meta.key] ?? 0}
-                    </span>
-                  </div>
-                ))}
+              <img
+                src={char.portrait}
+                alt={char.name}
+                style={{
+                  width: 56, height: 56, borderRadius: '50%',
+                  objectFit: 'cover', objectPosition: 'center top',
+                  border: `2px solid ${char.themeColor}44`,
+                  marginBottom: 6,
+                }}
+              />
+              <span style={{ fontSize: 12, fontWeight: 500, color: char.themeColor }}>
+                {char.name}
+              </span>
+              <span style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 4 }}>
+                {char.title}
+              </span>
+              {/* Mini affection bar */}
+              <div style={{ width: '80%', height: 3, borderRadius: 2, background: 'rgba(0,0,0,0.06)' }}>
+                <div style={{
+                  height: '100%', borderRadius: 2, background: char.themeColor,
+                  width: `${primaryVal}%`, transition: 'width 0.5s ease',
+                }} />
               </div>
-            </motion.div>
+              <span style={{ fontSize: 9, color: 'var(--text-muted)', marginTop: 2 }}>
+                {level.name} {primaryVal}
+              </span>
+            </button>
           )
         })}
       </div>
@@ -355,7 +299,7 @@ export default function TabCharacter() {
           characters={characters}
           characterStats={characterStats}
           playerName={playerName}
-          onSelect={handleNodeSelect}
+          onSelect={(id) => setDossierChar(id)}
         />
       </div>
 
