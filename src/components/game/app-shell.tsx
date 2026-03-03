@@ -61,8 +61,8 @@ export default function AppShell({ onMenuOpen }: { onMenuOpen: () => void }) {
   const chapter = getCurrentChapter(currentRound)
 
   const TABS: Array<{ key: 'dialogue' | 'scene' | 'character'; label: string; icon: React.ReactNode }> = [
-    { key: 'dialogue', label: '对话', icon: <ChatCircleDots size={20} weight="fill" /> },
     { key: 'scene', label: '场景', icon: <MapTrifold size={20} weight="fill" /> },
+    { key: 'dialogue', label: '对话', icon: <ChatCircleDots size={20} weight="fill" /> },
     { key: 'character', label: '人物', icon: <Users size={20} weight="fill" /> },
   ]
 

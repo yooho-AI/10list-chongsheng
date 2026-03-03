@@ -7,11 +7,13 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { ChatCircleDots } from '@phosphor-icons/react'
 import {
   useGameStore,
   type Character,
   getStatLevel,
 } from '@/lib/store'
+import CharacterChat from './character-chat'
 
 const P = 'cs'
 
@@ -206,6 +208,7 @@ export default function TabCharacter() {
   const playerName = useGameStore((s) => s.playerName)
 
   const [dossierChar, setDossierChar] = useState<string | null>(null)
+  const [chatChar, setChatChar] = useState<string | null>(null)
 
   const selectedChar = currentCharacter ? characters[currentCharacter] : null
 
@@ -291,15 +294,31 @@ export default function TabCharacter() {
               }}
               onClick={() => handleNodeSelect(id)}
             >
-              <img
-                src={char.portrait}
-                alt={char.name}
-                style={{
-                  width: 36, height: 36, borderRadius: '50%',
-                  objectFit: 'cover', objectPosition: 'center top',
-                  border: `2px solid ${char.themeColor}44`,
-                }}
-              />
+              <div style={{ position: 'relative' }}>
+                <img
+                  src={char.portrait}
+                  alt={char.name}
+                  style={{
+                    width: 36, height: 36, borderRadius: '50%',
+                    objectFit: 'cover', objectPosition: 'center top',
+                    border: `2px solid ${char.themeColor}44`,
+                  }}
+                />
+                {/* 聊天按钮 */}
+                <div
+                  onClick={(e) => { e.stopPropagation(); setChatChar(id) }}
+                  style={{
+                    position: 'absolute', bottom: -4, right: -4,
+                    width: 20, height: 20, borderRadius: '50%',
+                    background: `${char.themeColor}18`,
+                    border: `1px solid ${char.themeColor}30`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer', zIndex: 1,
+                  }}
+                >
+                  <ChatCircleDots size={12} weight="fill" color={char.themeColor} />
+                </div>
+              </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 13, fontWeight: 500, color: char.themeColor, marginBottom: 4 }}>
                   {char.name}
@@ -350,6 +369,13 @@ export default function TabCharacter() {
             stats={characterStats[dossierChar] || {}}
             onClose={() => setDossierChar(null)}
           />
+        )}
+      </AnimatePresence>
+
+      {/* ── Character Chat ── */}
+      <AnimatePresence>
+        {chatChar && characters[chatChar] && (
+          <CharacterChat charId={chatChar} onClose={() => setChatChar(null)} />
         )}
       </AnimatePresence>
     </div>

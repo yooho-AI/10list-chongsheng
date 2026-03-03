@@ -277,12 +277,14 @@ export default function App() {
   const gameStarted = useGameStore((s) => s.gameStarted)
   const setPlayerInfo = useGameStore((s) => s.setPlayerInfo)
   const initGame = useGameStore((s) => s.initGame)
+  const sendMessage = useGameStore((s) => s.sendMessage)
   const [showMenu, setShowMenu] = useState(false)
 
   const handleStart = (gender: 'male' | 'female', name: string) => {
     trackGameStart()
     setPlayerInfo(gender, name)
     initGame()
+    setTimeout(() => sendMessage('开始游戏'), 500)
   }
 
   if (!gameStarted) {
