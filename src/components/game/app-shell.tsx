@@ -13,9 +13,9 @@ import {
   MAX_ROUNDS,
   getCurrentChapter,
 } from '@/lib/store'
-import { toggleBGM } from '@/lib/bgm'
+import { useBgm } from '@/lib/bgm'
 import {
-  Notebook, Scroll, MusicNotes,
+  Notebook, Scroll, MusicNotes, SpeakerSimpleSlash,
   List, ChatCircleDots, MapTrifold, Users,
 } from '@phosphor-icons/react'
 import DashboardDrawer from './dashboard-drawer'
@@ -37,6 +37,7 @@ export default function AppShell({ onMenuOpen }: { onMenuOpen: () => void }) {
   const cryDecibel = useGameStore((s) => s.cryDecibel)
   const storyRecords = useGameStore((s) => s.storyRecords)
 
+  const { isPlaying, toggle: toggleBgm } = useBgm()
   const touchRef = useRef<{ x: number; y: number } | null>(null)
   const [toastMsg] = useState('')
 
@@ -88,10 +89,10 @@ export default function AppShell({ onMenuOpen }: { onMenuOpen: () => void }) {
           </span>
           <button
             className={`${P}-header-btn`}
-            onClick={() => toggleBGM()}
-            title="音乐"
+            onClick={toggleBgm}
+            title={isPlaying ? '暂停音乐' : '播放音乐'}
           >
-            <MusicNotes size={18} weight="fill" />
+            {isPlaying ? <MusicNotes size={18} /> : <SpeakerSimpleSlash size={18} />}
           </button>
           <button className={`${P}-header-btn`} onClick={onMenuOpen} title="菜单">
             <List size={20} />
